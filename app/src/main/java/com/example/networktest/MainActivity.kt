@@ -7,9 +7,13 @@ import android.util.Log
 import android.view.View
 import android.widget.TextView
 import com.example.networktest.model.presentation.BookResponse
+import com.example.networktest.model.remote.Api
 import com.example.networktest.model.remote.executeBookSearch
 import com.example.networktest.model.remote.isDeviceConnected
 import com.google.android.material.snackbar.Snackbar
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 private const val TAG = "MainActivity"
 class MainActivity : AppCompatActivity() {
@@ -18,9 +22,27 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         if (isDeviceConnected())
-            executeNetworkCall()
+            //executeNetworkCall()
+                executeRetrofit()
         else
             showError()
+    }
+
+    private fun executeRetrofit() {
+       Api.initRetrofit().getBookByTitle("how to made puchero")
+           .enqueue(object : Callback<BookResponse> {
+               override fun onResponse(call: Call<BookResponse>, response: Response<BookResponse>) {
+
+                   if(response.isSuccessful)
+                       findViewById<TextView>(R.id.tv_display).text = response.body().toString() ?: ""
+                   else
+                       showError()
+               }
+
+               override fun onFailure(call: Call<BookResponse>, t: Throwable) {
+
+               }
+           } )
     }
 
     private fun showError() {
