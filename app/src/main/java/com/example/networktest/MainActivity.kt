@@ -10,6 +10,8 @@ import com.example.networktest.model.presentation.BookResponse
 import com.example.networktest.model.remote.Api
 import com.example.networktest.model.remote.executeBookSearch
 import com.example.networktest.model.remote.isDeviceConnected
+import com.example.networktest.view.BookListFragment
+import com.example.networktest.view.SearchBookFragment
 import com.google.android.material.snackbar.Snackbar
 import retrofit2.Call
 import retrofit2.Callback
@@ -22,19 +24,26 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         if (isDeviceConnected())
+
+            supportFragmentManager.beginTransaction().replace(R.id.container_search,
+                SearchBookFragment()
+            ).commit()
             //executeNetworkCall()
-                executeRetrofit()
+                //executeRetrofit()
         else
             showError()
     }
 
-    private fun executeRetrofit() {
-       Api.initRetrofit().getBookByTitle("how to made puchero")
+     fun executeRetrofit(bookTitle:String,bookType:String,maxResult:Int) {
+       Api.initRetrofit().getBookByTitle(bookTitle,bookType,maxResult)
            .enqueue(object : Callback<BookResponse> {
                override fun onResponse(call: Call<BookResponse>, response: Response<BookResponse>) {
 
+
                    if(response.isSuccessful)
-                       findViewById<TextView>(R.id.tv_display).text = response.body().toString() ?: ""
+//                       findViewById<TextView>(R.id.tv_display).text = response.body().toString() ?: ""
+
+                        inflateDisplayFragment(response.body())
                    else
                        showError()
                }
@@ -45,18 +54,30 @@ class MainActivity : AppCompatActivity() {
            } )
     }
 
+    private fun inflateDisplayFragment(dataSet: BookResponse?) {
+
+        dataSet?.let {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.container_display,BookListFragment.newInstance(it))
+                .commit()
+        }
+
+    }
+
     private fun showError() {
-      Snackbar.make(findViewById(R.id.tv_display),
+//      Snackbar.make(findViewById(R.id.tv_display),
+     Snackbar.make(findViewById(R.id.container_display),
       "No network, retry?",Snackbar.LENGTH_INDEFINITE
           ).setAction("Retry") {
           Log.d(TAG, "showError: Retry")
       }.show()
     }
 
-    private fun executeNetworkCall() {
+//    private fun executeNetworkCall() {
+//
+//        BootNetwork(findViewById(R.id.tv_display)).execute()
+//    }
 
-        BootNetwork(findViewById(R.id.tv_display)).execute()
-    }
     class BootNetwork (private val display : TextView): AsyncTask<String,Void,BookResponse>() {
         override fun doInBackground(vararg p0: String?): BookResponse? {
 //            executeBookSearch("coding for dummies ")
